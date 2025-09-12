@@ -1,6 +1,9 @@
 import re
 import sys
 
+# Make weighted array initialization global
+weighted_array = []
+
 def add_node():
     for row in weighted_array:
         row.append(0)
@@ -25,74 +28,72 @@ def remove_edge(start, destination):
 
 def to_adjacency_list():
     i, j = 0 , 0
-    fin = [("city"+str(i)+":") for i in range(len(weighted_array))]
+    fin = [("City"+str(i)+":") for i in range(len(weighted_array))] # c to C for formatting
     first = True
     for rows in weighted_array:
         j = 0  
         for cols in rows:
             if cols != 0:
                 if first == True:
-                    fin[i] += " city" + str(j) + "(" + str(cols) + ")"
+                    fin[i] += " City" + str(j) + "(" + str(cols) + ")" # c to C for formatting
                     first = False
                 else:
-                    fin[i] += ", city" + str(j) + "(" + str(cols) + ")"
+                    fin[i] += ", City" + str(j) + "(" + str(cols) + ")" # c to C for formatting
             j += 1
         first = True
         i += 1
     for routes in fin:
         print(routes)
 
+# Make graph building logic a defined function for reuse
+def build_graph(file_path):
+    pattern1 = re.compile(r"City(\d+) City(\d+) (\d+)")
+    try:
+        with open(file_path, 'r') as file:
+            number_of_cities = 0
+            number_of_roads = 0
+            city_counter_mode = False
+            road_counter_mode = False
+            for line in file:
+                clean_line = line.strip()
+                if clean_line == 'CITIES':
+                    city_counter_mode = True
+                    continue
+                if clean_line == 'ROADS':
+                    city_counter_mode = False
+                    road_counter_mode = True
+                    continue
+                if city_counter_mode and clean_line:
+                    number_of_cities += 1
+                if road_counter_mode and clean_line:
+                    number_of_roads += 1
 
-fileinput = sys.argv[1]
-pattern1 = re.compile(r"City(\d+) City(\d+) (\d+)")
+            weighted_array = [[0 for _ in range(number_of_cities)] for _ in range(number_of_cities)]
 
-try:
-    with open(fileinput, 'r') as file:
-        number_of_cities = 0
-        number_of_roads = 0
-        city_counter_mode = False
-        road_counter_mode = False
-        for line in file:
-            clean_line = line.strip()
-            if clean_line == 'CITIES':
-                city_counter_mode = True
-                continue
-            if clean_line == 'ROADS':
-                city_counter_mode = False
-                road_counter_mode = True
-                continue
-            if city_counter_mode and clean_line:
-                number_of_cities += 1
-            if road_counter_mode and clean_line:
-                number_of_roads += 1
+            file.seek(0)
+
+            road_mode = False
+
+            for line in file:
+                clean_line = line.strip()
+                match = pattern1.search(clean_line)
+                if match:
+                    start = int(match.group(1))
+                    destination = int(match.group(2))
+                    weight = int(match.group(3))
+                    weighted_array[start][destination] = weight
+
+            return weighted_array # Add return for reusing populated weighted array elsewhere
+    except FileNotFoundError:
+        print(f"Error: The file '{file_path}' was not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+
+# Guard executable lines from running when imported into another script
+if __name__ == "__main__":
+    fileinput = sys.argv[1]
+    weighted_array = build_graph(fileinput)
     
-        weighted_array = [[0 for _ in range(number_of_cities)] for _ in range(number_of_cities)]
-
-        file.seek(0)
-
-        road_mode = False
-        
-        for line in file:
-            clean_line = line.strip()
-
-
-            match = pattern1.search(clean_line)
-            if match:
-                start = int(match.group(1))
-                destination = int(match.group(2))
-                weight = int(match.group(3))
-                weighted_array[start][destination] = weight
-
-
-
-except FileNotFoundError:
-    print(f"Error: The file '{fileinput}' was not found.")
-except Exception as e:
-    print(f"An error occurred: {e}")
-
-
-
-
-
-                
-to_adjacency_list()
+    to_adjacency_list()
