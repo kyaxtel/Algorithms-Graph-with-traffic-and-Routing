@@ -89,11 +89,33 @@ def build_graph(file_path):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+def update_traffic(file_path):
+    traffic_pattern = re.compile(r"TRAFFIC_REPORT City(\d+) City(\d+) ([-+]?\d+)")
+    try:
+        with open(file_path, 'r') as file:
+            for line in file:
+                clean_line = line.strip()
+                match = traffic_pattern.search(clean_line)
+                if match:
+                    start = int(match.group(1))
+                    destination = int(match.group(2))
+                    traffic = int(match.group(3))
+                    weighted_array[start][destination] += traffic
+            return weighted_array
+    except FileNotFoundError:
+        print(f"Error: The file '{file_path}' was not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 
 
 # Guard executable lines from running when imported into another script
 if __name__ == "__main__":
     fileinput = sys.argv[1]
     weighted_array = build_graph(fileinput)
+    to_adjacency_list()
     
+    file2 = sys.argv[2]
+    weighted_array = update_traffic(file2)
+
     to_adjacency_list()
